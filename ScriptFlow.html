@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ScriptFlow</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:400,600,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+  <style>
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    header {
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .search-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .search-container input {
+      padding: 0.4rem 2.2rem 0.4rem 0.8rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    .search-container .search-icon {
+      position: absolute;
+      right: 0.5rem;
+      font-size: 1.2rem;
+      color: #666;
+    }
+    .btn-toggle {
+      background: #1AB5BF;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    main {
+      padding: 1rem;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      max-width: 800px;
+      width: 100%;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 1rem 2rem;
+      margin: 1rem;
+    }
+    .form-group {
+      margin-bottom: 0.75rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.25rem;
+      font-weight: 600;
+      color: #666;
+    }
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    .btn {
+      background: #1AB5BF;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .script-card {
+      background: #f9f9f9;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      cursor: move;
+    }
+    .drag-handle {
+      font-size: 1.2rem;
+      margin-right: 0.5rem;
+      color: #777;
+    }
+    .script-info {
+      flex-grow: 1;
+      margin-right: 1rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 0.95rem;
+    }
+    .script-actions {
+      display: flex;
+      align-items: center;
+    }
+    .script-actions button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      margin-left: 0.5rem;
+      color: #1AB5BF;
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #333;
+      color: #fff;
+      padding: 0.75rem 1rem;
+      border-radius: 4px;
+      opacity: 0;
+      transition: opacity 0.5s;
+      z-index: 1000;
+      font-size: 0.9rem;
+    }
+    .toast.show {
+      opacity: 1;
+    }
+    body.dark-mode {
+      background: #121212;
+      color: #f0f0f0;
+    }
+    body.dark-mode header,
+    body.dark-mode .container {
+      background: #1F1F1F;
+      color: #f0f0f0;
+    }
+    body.dark-mode input,
+    body.dark-mode textarea {
+      background: #333;
+      color: #f0f0f0;
+      border-color: #555;
+    }
+    body.dark-mode .script-card {
+      background: #333;
+      border-color: #555;
+    }
+    body.dark-mode .btn, 
+    body.dark-mode .btn-toggle {
+      background: #555;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo-container">
+      <img src="https://i.ibb.co/k233RLdg/Chat-GPT-Image-Mar-26-2025-11-12-03-AM-removebg-preview.png" alt="ScriptFlow Logo">
+    </div>
+    <div class="header-controls">
+      <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search scripts...">
+        <span class="material-icons search-icon">search</span>
+      </div>
+      <button id="themeToggle" class="btn-toggle">Toggle Theme</button>
+      <button id="exportBtn" class="btn-toggle">Export</button>
+      <input type="file" id="importInput" accept=".json" style="display: none;">
+      <button id="importBtn" class="btn-toggle">Import</button>
+    </div>
+  </header>
+  <main>
+    <div class="container">
+      <section id="script-form">
+        <h2>Add New Script</h2>
+        <div class="form-group">
+          <label for="scriptName">Script Name</label>
+          <input type="text" id="scriptName" placeholder="Enter script name">
+        </div>
+        <div class="form-group">
+          <label for="scriptContent">Script Command</label>
+          <textarea id="scriptContent" rows="1" placeholder="Enter script command"></textarea>
+        </div>
+        <button id="addScriptBtn" class="btn">Add Script</button>
+      </section>
+      <hr>
+      <section id="script-list-section">
+        <h2>Scripts</h2>
+        <div id="scriptList"></div>
+      </section>
+    </div>
+  </main>
+  <div id="toast" class="toast"></div>
+  <script>
+    'use strict';
+
+    let scripts = [];
+
+    function saveScriptsToLocalStorage() {
+      localStorage.setItem('scripts', JSON.stringify(scripts));
+    }
+
+    function loadScriptsFromLocalStorage() {
+      const stored = localStorage.getItem('scripts');
+      if (stored) {
+        try {
+          scripts = JSON.parse(stored) || [];
+        } catch {
+          localStorage.removeItem('scripts');
+          scripts = [];
+        }
+      }
+      renderScriptList();
+    }
+
+    function renderScriptList() {
+      const listContainer = document.getElementById('scriptList');
+      listContainer.innerHTML = '';
+      scripts.forEach(script => {
+        const card = createScriptCard(script.name, script.content, script.id);
+        listContainer.appendChild(card);
+      });
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('Copied: ' + text);
+      } catch {
+        showToast('Copy failed');
+      }
+    }
+
+    function removeScriptCard(cardElement) {
+      const id = cardElement.dataset.id;
+      cardElement.remove();
+      scripts = scripts.filter(script => script.id !== id);
+      saveScriptsToLocalStorage();
+      showToast('Script removed');
+    }
+
+    function createScriptCard(name, content, id) {
+      const card = document.createElement('div');
+      card.className = 'script-card';
+      card.dataset.id = id;
+
+      const dragHandle = document.createElement('span');
+      dragHandle.className = 'drag-handle material-icons';
+      dragHandle.innerText = 'drag_handle';
+
+      const info = document.createElement('div');
+      info.className = 'script-info';
+      info.innerHTML = `<strong>${name}:</strong> ${content}`;
+
+      const actions = document.createElement('div');
+      actions.className = 'script-actions';
+
+      const copyBtn = document.createElement('button');
+      copyBtn.innerHTML = '<span class="material-icons">content_copy</span>';
+      copyBtn.addEventListener('click', () => copyText(content));
+
+      const removeBtn = document.createElement('button');
+      removeBtn.innerHTML = '<span class="material-icons">delete</span>';
+      removeBtn.addEventListener('click', () => removeScriptCard(card));
+
+      actions.appendChild(copyBtn);
+      actions.appendChild(removeBtn);
+      card.appendChild(dragHandle);
+      card.appendChild(info);
+      card.appendChild(actions);
+
+      return card;
+    }
+
+    function addScript() {
+      const name = document.getElementById('scriptName').value.trim();
+      const content = document.getElementById('scriptContent').value.trim();
+      if (!name || !content) return showToast('Please fill out all fields.');
+      const id = Date.now().toString();
+      scripts.push({ id, name, content });
+      saveScriptsToLocalStorage();
+      renderScriptList();
+      document.getElementById('scriptName').value = '';
+      document.getElementById('scriptContent').value = '';
+      showToast('Script added successfully');
+    }
+
+    function filterScripts() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const listContainer = document.getElementById('scriptList');
+      listContainer.innerHTML = '';
+      scripts.filter(script =>
+        script.name.toLowerCase().includes(searchTerm) ||
+        script.content.toLowerCase().includes(searchTerm)
+      ).forEach(script => {
+        listContainer.appendChild(createScriptCard(script.name, script.content, script.id));
+      });
+    }
+
+    function initializeDragAndDrop() {
+      const list = document.getElementById('scriptList');
+      Sortable.create(list, {
+        animation: 150,
+        onEnd: function() {
+          const reordered = Array.from(list.children).map(child => {
+            return scripts.find(s => s.id === child.dataset.id);
+          });
+          scripts = reordered;
+          saveScriptsToLocalStorage();
+        }
+      });
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('dark-mode');
+    }
+
+    function exportScripts() {
+      const blob = new Blob([JSON.stringify(scripts, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'scripts.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Scripts exported');
+    }
+
+    function handleImport(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (!Array.isArray(data)) throw new Error();
+          data.forEach(script => {
+            if (script.name && script.content) {
+              const id = script.id || Date.now().toString() + Math.random();
+              if (!scripts.some(s => s.name === script.name && s.content === script.content)) {
+                scripts.push({ id, name: script.name, content: script.content });
+              }
+            }
+          });
+          saveScriptsToLocalStorage();
+          renderScriptList();
+          showToast('Scripts imported');
+        } catch {
+          showToast('Invalid file');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadScriptsFromLocalStorage();
+      initializeDragAndDrop();
+      document.getElementById('addScriptBtn').addEventListener('click', addScript);
+      document.getElementById('searchInput').addEventListener('input', filterScripts);
+      document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+      document.getElementById('exportBtn').addEventListener('click', exportScripts);
+      document.getElementById('importBtn').addEventListener('click', () => {
+        document.getElementById('importInput').click();
+      });
+      document.getElementById('importInput').addEventListener('change', handleImport);
+    });
+  </script>
+</body>
+</html>
